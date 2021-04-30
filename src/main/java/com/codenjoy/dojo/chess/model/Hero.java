@@ -1,4 +1,4 @@
-package com.codenjoy.dojo.chess.service;
+package com.codenjoy.dojo.chess.model;
 
 /*-
  * #%L
@@ -22,10 +22,8 @@ package com.codenjoy.dojo.chess.service;
  * #L%
  */
 
-import com.codenjoy.dojo.chess.model.Color;
-import com.codenjoy.dojo.chess.model.Events;
-import com.codenjoy.dojo.chess.model.Move;
 import com.codenjoy.dojo.chess.model.item.piece.Piece;
+import com.codenjoy.dojo.chess.service.Events;
 import com.codenjoy.dojo.services.Direction;
 import com.codenjoy.dojo.services.Point;
 import com.codenjoy.dojo.services.joystick.NoDirectionJoystick;
@@ -38,19 +36,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class ChessPlayerHero extends PlayerHero<Chess> implements NoDirectionJoystick {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ChessPlayerHero.class);
+public class Hero extends PlayerHero<Field> implements NoDirectionJoystick {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(Hero.class);
 
     private final Color color;
-
     private final List<Events> events = new ArrayList<>();
     private boolean askedForColor = false;
     private Move lastMove;
     private Move action;
 
-    public ChessPlayerHero(Color color, Chess field) {
+    public Hero(Color color) {
         this.color = color;
-        this.field = field;
     }
 
     @Override

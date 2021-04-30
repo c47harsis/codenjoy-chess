@@ -22,13 +22,12 @@ package com.codenjoy.dojo.chess.model;
  * #L%
  */
 
-import com.codenjoy.dojo.chess.common.AbstractGameTest;
 import org.junit.Test;
 
 import static com.codenjoy.dojo.chess.model.Color.BLACK;
 import static com.codenjoy.dojo.chess.model.Color.WHITE;
 import static com.codenjoy.dojo.chess.model.Move.from;
-import static com.codenjoy.dojo.chess.model.Events.WRONG_MOVE;
+import static com.codenjoy.dojo.chess.service.Events.WRONG_MOVE;
 
 /**
  * Wiki: https://en.wikipedia.org/wiki/En_passant

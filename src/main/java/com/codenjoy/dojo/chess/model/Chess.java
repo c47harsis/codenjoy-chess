@@ -1,4 +1,4 @@
-package com.codenjoy.dojo.chess.service;
+package com.codenjoy.dojo.chess.model;
 
 /*-
  * #%L
@@ -23,13 +23,10 @@ package com.codenjoy.dojo.chess.service;
  */
 
 
-import com.codenjoy.dojo.chess.model.Color;
-import com.codenjoy.dojo.chess.model.Events;
-import com.codenjoy.dojo.chess.model.Move;
 import com.codenjoy.dojo.chess.model.level.Level;
+import com.codenjoy.dojo.chess.service.*;
 import com.codenjoy.dojo.services.Dice;
 import com.codenjoy.dojo.services.Direction;
-import com.codenjoy.dojo.services.multiplayer.GameField;
 import com.codenjoy.dojo.services.printer.BoardReader;
 import com.google.common.collect.Lists;
 import org.apache.commons.collections4.CollectionUtils;
@@ -37,11 +34,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.codenjoy.dojo.chess.service.GameSettings.Option.WAIT_UNTIL_MAKE_A_MOVE;
+import static java.util.stream.Collectors.toList;
 
-public class Chess implements GameField<Player> {
+public class Chess implements Field {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(Chess.class);
     private static final Direction DEFAULT_ATTACK_DIRECTION = Color.WHITE.getAttackDirection();
 
@@ -77,9 +75,13 @@ public class Chess implements GameField<Player> {
 
     @Override
     public void tick() {
+        if (players.isEmpty()) {
+            return;
+        }
+
         List<Color> aliveBeforeTick = getAlivePlayers().stream()
                 .map(Player::getColor)
-                .collect(Collectors.toList());
+                .collect(toList());
         Player player = getPlayer(currentColor);
 
         if (player.askedForColor()) {
@@ -116,8 +118,9 @@ public class Chess implements GameField<Player> {
             LOGGER.warn("Trying to add new player, but the game is already full");
             return;
         }
-
-        players.add(player);
+        if (!players.contains(player)) {
+            players.add(player);
+        }
         player.newHero(this);
     }
 
@@ -132,8 +135,8 @@ public class Chess implements GameField<Player> {
     }
 
     @Override
-    public BoardReader<Player> reader() {
-        return new ChessBoardReader(this);
+    public BoardReader reader() {
+        return new BoardReaderImpl(this);
     }
 
     public int getBoardSize() {
@@ -146,8 +149,8 @@ public class Chess implements GameField<Player> {
 
     public List<Player> getAlivePlayers() {
         return players.stream()
-                .filter(Player::isAlive)
-                .collect(Collectors.toList());
+                .filter(Player::isActive)
+                .collect(toList());
     }
 
     public Color getCurrentColor() {
@@ -159,8 +162,12 @@ public class Chess implements GameField<Player> {
     }
 
     public Color getAvailableColor() {
-        Collection<Color> unusedColors = CollectionUtils.subtract(board.getColors(), getUsedColors());
-        return unusedColors.size() > 0 ? unusedColors.iterator().next() : null;
+        List<Color> used = getUsedColors();
+        return board.getColors().stream()
+                .filter(color -> !used.contains(color))
+                .sorted()
+                .findFirst()
+                .orElse(null);
     }
 
     public GameBoard getBoard() {
@@ -172,10 +179,10 @@ public class Chess implements GameField<Player> {
         List<Color> marked = Lists.newArrayList();
         while (currentColor != null && board.getAvailableMoves(currentColor).isEmpty()) {
             if (settings.waitUntilMakeAMove()) {
-                getPlayer(currentColor).event(Events.GAME_OVER);
+                getPlayer(currentColor).gameOver();
             } else {
                 if (marked.contains(currentColor)) {
-                    marked.forEach(c -> getPlayer(c).event(Events.GAME_OVER));
+                    marked.forEach(c -> getPlayer(c).gameOver());
                 } else {
                     marked.add(currentColor);
                     getPlayer(currentColor).event(Events.WRONG_MOVE);
@@ -188,7 +195,7 @@ public class Chess implements GameField<Player> {
     private void checkGameOvers(List<Color> aliveBeforeTick) {
         List<Color> alive = getAlivePlayers().stream()
                 .map(Player::getColor)
-                .collect(Collectors.toList());
+                .collect(toList());
         Collection<Color> died = CollectionUtils.subtract(aliveBeforeTick, alive);
         died.forEach(color -> getPlayer(color).event(Events.GAME_OVER));
     }
@@ -196,7 +203,7 @@ public class Chess implements GameField<Player> {
     private void checkVictory() {
         List<Player> alivePlayers = getAlivePlayers();
         if (alivePlayers.size() == 1) {
-            alivePlayers.get(0).event(Events.WIN);
+            alivePlayers.get(0).win();
         }
     }
 
@@ -204,7 +211,7 @@ public class Chess implements GameField<Player> {
         return players.stream()
                 .map(Player::getColor)
                 .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+                .collect(toList());
     }
 
     private Player getPlayer(Color color) {

@@ -1,4 +1,4 @@
-package com.codenjoy.dojo.chess.service;
+package com.codenjoy.dojo.chess.model;
 
 /*-
  * #%L
@@ -23,60 +23,65 @@ package com.codenjoy.dojo.chess.service;
  */
 
 
-import com.codenjoy.dojo.chess.model.Color;
-import com.codenjoy.dojo.chess.model.Events;
-import com.codenjoy.dojo.chess.model.Move;
+import com.codenjoy.dojo.chess.service.Events;
+import com.codenjoy.dojo.chess.service.GameSettings;
 import com.codenjoy.dojo.services.EventListener;
+import com.codenjoy.dojo.services.Point;
 import com.codenjoy.dojo.services.multiplayer.GamePlayer;
 
 import static com.codenjoy.dojo.chess.service.GameSettings.Option.LAST_PLAYER_STAYS;
 
-public class Player extends GamePlayer<ChessPlayerHero, Chess> {
-    private ChessPlayerHero hero;
-    private Chess game;
-    private boolean winner = false;
-    private boolean alive = true;
+public class Player extends GamePlayer<Hero, Field> {
+
+    private boolean winner;
+    private boolean active;
 
     public Player(EventListener listener, GameSettings settings) {
         super(listener, settings);
     }
 
     @Override
-    public ChessPlayerHero getHero() {
-        return hero;
-    }
-
-    @Override
-    public void newHero(Chess game) {
-        this.game = game;
-        this.alive = true;
+    public Hero createHero(Point pt) {
+        this.active = true;
         this.winner = false;
-        Color color = game.getAvailableColor();
-        this.hero = new ChessPlayerHero(color, game);
+        return new Hero(field.getAvailableColor());
     }
 
+    /**
+     * The player is alive as long as his king is alive and he
+     * has something to attack on the field.
+     */
     @Override
     public boolean isAlive() {
-        return alive && hero.isAlive();
+        return isActive() && !isLastWinnerOnBoard();
     }
 
+    /**
+     * The player is active as long as his king is alive.
+     */
+    public boolean isActive() {
+        return active && hero.isAlive();
+    }
+
+    /**
+     * @return true - when the player removes all the kings from the field
+     *          AND there are no more pieces of a different color.
+     */
+    public boolean isLastWinnerOnBoard() {
+        return isWin() && hero.isWinner();
+    }
+
+    /**
+     * @return true - when the player removes all the kings from the field
+     */
     @Override
     public boolean isWin() {
         return winner;
     }
 
     @Override
-    public void event(Object eventObj) {
-        super.event(eventObj);
-        Events event = (Events) eventObj;
-        switch (event) {
-            case WIN:
-                this.winner = true;
-                break;
-            case GAME_OVER:
-                this.alive = false;
-                break;
-        }
+    public boolean shouldLeave() {
+        return true;
     }
 
     public Color getColor() {
@@ -89,11 +94,6 @@ public class Player extends GamePlayer<ChessPlayerHero, Chess> {
         return hero.getLastMove();
     }
 
-    @Override
-    public boolean shouldLeave() {
-        return true;
-    }
-
     public boolean askedForColor() {
         return hero.askedForColor();
     }
@@ -101,7 +101,17 @@ public class Player extends GamePlayer<ChessPlayerHero, Chess> {
     @Override
     public boolean wantToStay() {
         return settings.bool(LAST_PLAYER_STAYS) &&
-                game.getBoard().getPieces().stream()
+                field.getBoard().getPieces().stream()
                         .anyMatch(p -> !p.getColor().equals(hero.getColor()));
+    }
+
+    public void win() {
+        event(Events.WIN);
+        winner = true;
+    }
+
+    public void gameOver() {
+        event(Events.GAME_OVER);
+        active = false;
     }
 }

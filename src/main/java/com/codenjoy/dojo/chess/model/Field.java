@@ -4,7 +4,7 @@ package com.codenjoy.dojo.chess.model;
  * #%L
  * Codenjoy - it's a dojo-like platform from developers to developers.
  * %%
- * Copyright (C) 2018 Codenjoy
+ * Copyright (C) 2018 - 2021 Codenjoy
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as
@@ -22,17 +22,15 @@ package com.codenjoy.dojo.chess.model;
  * #L%
  */
 
+import com.codenjoy.dojo.services.multiplayer.GameField;
 
-public enum Events {
-    WIN,
-    WRONG_MOVE,
-    GAME_OVER,
+public interface Field extends GameField<Player> {
 
-    KING_TAKEN,
-    QUEEN_TAKEN,
-    BISHOP_TAKEN,
-    ROOK_TAKEN,
-    KNIGHT_TAKEN,
-    PAWN_TAKEN
-    ;
+    Color getAvailableColor();
+
+    GameBoard getBoard();
+
+    Color getCurrentColor();
+
+    Rotator getRotator();
 }

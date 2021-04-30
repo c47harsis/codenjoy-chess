@@ -1,10 +1,10 @@
-package com.codenjoy.dojo.chess.client;
+package com.codenjoy.dojo.chess.service;
 
 /*-
  * #%L
  * Codenjoy - it's a dojo-like platform from developers to developers.
  * %%
- * Copyright (C) 2018 - 2021 Codenjoy
+ * Copyright (C) 2018 Codenjoy
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as
@@ -22,6 +22,17 @@ package com.codenjoy.dojo.chess.client;
  * #L%
  */
 
-public enum Color {
-    WHITE, BLACK, RED, BLUE
+
+public enum Events {
+    WIN,
+    WRONG_MOVE,
+    GAME_OVER,
+
+    KING_TAKEN,
+    QUEEN_TAKEN,
+    BISHOP_TAKEN,
+    ROOK_TAKEN,
+    KNIGHT_TAKEN,
+    PAWN_TAKEN
+    ;
 }

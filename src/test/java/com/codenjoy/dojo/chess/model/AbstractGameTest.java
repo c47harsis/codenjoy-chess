@@ -1,4 +1,4 @@
-package com.codenjoy.dojo.chess.common;
+package com.codenjoy.dojo.chess.model;
 
 /*-
  * #%L
@@ -22,15 +22,11 @@ package com.codenjoy.dojo.chess.common;
  * #L%
  */
 
-import com.codenjoy.dojo.chess.model.Color;
-import com.codenjoy.dojo.chess.model.Events;
-import com.codenjoy.dojo.chess.model.Move;
+import com.codenjoy.dojo.chess.TestGameSettings;
 import com.codenjoy.dojo.chess.model.item.piece.Piece;
 import com.codenjoy.dojo.chess.model.level.Level;
-import com.codenjoy.dojo.chess.service.Chess;
+import com.codenjoy.dojo.chess.service.Events;
 import com.codenjoy.dojo.chess.service.GameSettings;
-import com.codenjoy.dojo.chess.service.Player;
-import com.codenjoy.dojo.chess.service.Rotator;
 import com.codenjoy.dojo.services.Dice;
 import com.codenjoy.dojo.services.EventListener;
 import com.codenjoy.dojo.services.Point;
@@ -43,18 +39,19 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.stubbing.OngoingStubbing;
 
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static java.util.stream.Collectors.joining;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
 
 @SuppressWarnings({"rawtypes", "unused", "unchecked", "SpellCheckingInspection"})
 public abstract class AbstractGameTest {
-    private final Map<Color, Player> players = new HashMap<>();
-    private final Map<Player, EventListener> listeners = new HashMap<>();
+    private final Map<Color, Player> players = new LinkedHashMap<>();
+    private final Map<Player, EventListener> listeners = new LinkedHashMap<>();
 
     private String board;
 
@@ -63,7 +60,6 @@ public abstract class AbstractGameTest {
     protected PrinterFactory printerFactory;
     protected GameSettings settings;
     protected TestHistory history;
-
 
     public static String classicBoard() {
         return "rkbqwbkr\n" +
@@ -80,13 +76,40 @@ public abstract class AbstractGameTest {
     public void setup() {
         dice = mock(Dice.class);
         printerFactory = new PrinterFactoryImpl();
-        settings = new GameSettings();
+        settings = new TestGameSettings();
         history = new TestHistory();
     }
 
     protected void reset() {
         setup();
         givenFl(board);
+    }
+
+    public void assrtPl(String expected) {
+        assertEquals(expected,
+                players.values().stream()
+                        .map(player -> playerStatus(player))
+                        .collect(joining("\n---------------\n")));
+    }
+
+    private String playerStatus(Player player) {
+        return String.format(
+                "Color  = %s\n" +
+                "Alive  = %s\n" +
+                "Active = %s\n" +
+                "Win    = %s\n" +
+                "Stay   = %s\n" +
+                "Leave  = %s\n" +
+                "Asked  = %s\n" +
+                "Last   = %s",
+                player.getColor(),
+                player.isAlive(),
+                player.isActive(),
+                player.isWin(),
+                player.wantToStay(),
+                player.shouldLeave(),
+                player.askedForColor(),
+                player.isLastWinnerOnBoard());
     }
 
     protected void dice(int... ints) {
